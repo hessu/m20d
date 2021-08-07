@@ -1,7 +1,11 @@
 
-m20d v1.0.2
+m20d
+=======
 
-  Installation structure:
+This is actually pretty historical, but it might work with newer Siemens GSM
+modules too.
+
+Installation structure:
   
   /opt/m20d
   /opt/m20d/bin     stick m20d and handler.pl here
