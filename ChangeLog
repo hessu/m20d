@@ -1,0 +1,172 @@
+
+Mon Dec 17 18:36:48 EET 2001	hessu
+	- create a ChangeLog
+	- fixed open_log to specify facility
+	- call open_log from start of main() to actually specify the facility
+	- version 1.0.2
+
+Tue Jan  7 14:54:42 EET 2003	hessu
+	- support for socket-type devices
+	- retry opening connection to module
+	- use PDU mode for exchanging messages with module, no
+	  polling except for keepalive purposes
+	- smaller latency thanks to no polling
+	- support for binary messages
+	- support for reading and setting PID/DCS
+	- new spool file format to support the above
+	- pass message to handler in a spool file
+	- command line parsing with a large number of configurable options,
+	  see m20d -h
+	- better logging levels and format, tunable levels
+	- keep statistics counters, measure & timestamp message handling
+	- message IDs
+	- version 2.0.0
+
+Fri Jan 10 16:20:39 EET 2003	hessu
+	- removed BSD-specific stuff (scandir & some headers) so that
+	  we can compile in a POSIX.1 environment without including
+	  a BSD compatibility environment which breaks other stuff...
+	  => Solaris 2.6, 2.8 compiles are ok again.
+	- longer timeout & better logging at SIM PIN insertion
+	- version 2.0.1
+
+Tue Jan 14 22:11:28 EET 2003	hessu
+	- made help text more readable, added missing options
+	- added configurable log destination
+	- added configurable poll time
+	- added mo retry logic (messages queued IN-CORE ONLY)
+	- added -f option to fork a daemon
+	- some more comments in the code
+	- catch SIGUSR1 and SIGUSR2, made USR1 log stats
+	- catch SIGTERM and shut down cleanly after finishing a loop
+	- small change to make it work with Siemens M20 again, in addition
+	  to the current target platform Siemens TC35
+	- version 2.0.2
+
+Wed Jan 15 14:00:48 EET 2003	hessu
+	- fixed logging to syslog selection on command line
+	- made the code a bit more modular
+	- with -r (trace module traffic), flush stdout after every write
+	  to have it in sync with the log lines which go through stderr
+	  and are synced after every write.
+	- version 2.0.3
+
+Mon Jan 27 18:42:59 EET 2003	hessu
+	- solaris warning-free compilation
+	- empty_read_buffer() does not exit() any more if the connection
+	  to the module fails (I/O error), returns -2 instead.
+	- attempt to make simultaenous MO/MT traffic stable
+	- version 2.0.4
+
+Fri Jan 31 14:11:22 EET 2003	hessu
+	- option -x <pidfile> to write a pid file
+	- more complete DCS parsing to handle more ways of message class
+	  and alphabet type indication
+	- tunable MO retry logic
+	- version 2.0.5
+
+Thu Feb 13 10:48:35 EET 2003	hessu
+	- write pid file _after_ forking. bummer.
+	- reorder some code
+	- modularize hex->binary and binary 7 bit default text -> ascii
+	  conversion code
+	- better TON/NPI parsing on MT, handle alphanumeric source addrs
+	- attempt to handle unsolicited MT deliveries while executing
+	  commands and sending MO
+	- only handle one MO message from the spool per loop, then wait
+	  for incoming messages for the poll interval.
+	- version 2.0.6
+
+Fri Feb 14 13:24:12 EET 2003	hessu
+	- fixed SEGV bugs in some log messages in DCS parsing
+	- move some TON/NPI parsing code in message.[ch]
+	- better TON/NPI encoding for MO PDU generation
+	- disable unsolicited SMS message transmission from module when
+	  shutting down
+	- version 2.0.7
+
+Tue Apr 22 10:48:10 EEST 2003	hessu
+	- escape text message contents in the logs
+	- write MT spool file to a temporary name (.mt.tmp), then rename to
+	  .mt before running the handler, to prevent race conditions.
+	- delete MT messages from SIM after reading them from CMGL (did not
+	  do this before!!)
+	- really, really disable unsolicited SMS message transmission from
+	  module when shutting down (do it _before_ closing the socket/serial
+	  port 8-).
+	- poll all (not just new) MT messages from SIM, so that everything
+	  will get read and deleted. When running this version for the first
+	  time, a bunch of old messages might be re-read and re-handled.
+	- version 2.0.8
+
+Thu Apr 24 12:51:37 EEST 2003	hessu
+	- keep track of program state:
+		"DOWN/UNDEFINED",
+		"DOWN/INIT",
+		"DOWN/CONNECTING",
+		"DOWN/HANDSHAKING",
+		"DOWN/NONETWORK",
+		"DOWN/RETRYSLEEP",
+		"DOWN/SHUTTINGDOWN",
+		"DOWN/SHUTDOWN",
+		"DOWN/FAILQUIT",
+		"UP/SLEEPING",
+		"UP/SENDING_MO",
+		"UP/POLLING"
+	- write state information <spooldir>/state.<logname> whenever state
+	  changes (at least every polling information)
+	- poll network information (network name, signal level/channel, etc)
+	  and write to state file
+	- enable unsolicited MT SMS message indications on every poll interval
+	  if connected to a GSM network
+	- version 2.1.0
+
+Tue Apr 29 13:17:12 EEST 2003	hessu
+	- write state files with permissions S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
+	  and spool files with S_IRUSR|S_IWUSR|S_IRGRP
+	- parse even-length alphanumeric sender addresses properly, including
+	  the last character
+	- version 2.1.1
+
+Tue Apr 29 13:43:52 EEST 2003	hessu
+	- removed unnecessary error logging with alphanumeric odd-length
+	  sender addresses
+	- 'solaris' target for compiling on 2.6 & 2.8: 'make solaris'
+	- version 2.1.2
+
+Mon May  5 15:40:46 EEST 2003	hessu
+	- add serial port speed configuration using parameter -b, supports
+	  speeds from 300 to 115200 (57600/76800/115200 only on platforms
+	  which support them).
+	- make network information / network states work with a M20 module
+	- version 2.1.3
+
+Wed Aug 11 17:49:29 EEST 2004	hessu
+	- fixed fd leak in TCP socket code, close the socket if
+	  connect() fails.
+	- if the modules has the required PIN codes but is not attempting
+	  network registration (CREG: 1,0), send AT+COPS=2 to disable
+	  network registration (actually does deregistration), and then
+	  AT+COPS=0 to enable it again
+	- fixed a typo in logging (s/discarder/discarded/)
+	- version 2.1.4
+
+Thu Aug 12 10:49:26 EEST 2004	hessu
+	- sometimes m20d quits with the following errors:
+	  ERR: Module responded with an ERROR for AT+CMGL
+	  ERR: [init] Error response to AT+CSMS=1
+	  made the following changes to (hopefully) get around this:
+	- after AT+CMGL fails, sleep before attempting wait_registration().
+	- in wait_registration(), AT+CSMS=1 is the fourth command issued,
+	  and the previous commands do not fail. Log bug ignore the result
+	  if this one fails.
+	- If wait_registration() fails after AT+CMGL fails, only quit if the
+	  return code indicates the PIN insertion failed. Otherwise,
+	  sleep and reconnect to the module.
+	- version 2.1.5
+
+Thu Nov 22 14:41:55 EET 2007	hessu
+	- clean compiling with gcc 4.2
+	- version 2.1.6
+
+
